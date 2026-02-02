@@ -1,0 +1,22 @@
+{
+  "app_name": "{{project_name.titleCase()}}",
+  "welcome": "Welcome",
+  "loading": "Loading...",
+  "error": "Error",
+  "try_again": "Try Again",
+  "go_back": "Go Back",
+  "success": "Success",
+  "failed": "Failed",
+  "cancel": "Cancel",
+  "ok": "OK",
+  "save": "Save",
+  "delete": "Delete",
+  "edit": "Edit",
+  "add": "Add",
+  "search": "Search",
+  "no_data": "No data available",
+  "network_error": "Network error. Please check your connection.",
+  "server_error": "Server error. Please try again later.",
+  "unauthorized": "Unauthorized access",
+  "not_found": "Resource not found"
+}

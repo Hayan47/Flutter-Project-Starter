@@ -1,0 +1,8 @@
+name: flutter_clean_architecture_hooks
+description: Hooks for flutter_clean_architecture mason brick
+
+environment:
+  sdk: ">=3.0.0 <4.0.0"
+
+dependencies:
+  mason: any

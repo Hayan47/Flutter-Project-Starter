@@ -1,0 +1,63 @@
+name: flutter_clean_architecture
+description: A Flutter project template with Clean Architecture, BLoC, multi-environment setup, and comprehensive core infrastructure
+version: 1.0.0
+
+vars:
+  project_name:
+    type: string
+    description: The project name in snake_case (e.g., my_awesome_app)
+    prompt: What is your project name?
+
+  project_description:
+    type: string
+    description: A brief description of your project
+    prompt: Enter project description
+    default: A new Flutter project with Clean Architecture
+
+  organization:
+    type: string
+    description: Organization name in reverse domain notation (e.g., com.example)
+    prompt: What is your organization?
+    default: com.example
+
+  dev_api_url:
+    type: string
+    description: Development API base URL
+    prompt: Enter development API URL
+    default: https://dev-api.example.com
+
+  prod_api_url:
+    type: string
+    description: Production API base URL
+    prompt: Enter production API URL
+    default: https://api.example.com
+
+  include_localization:
+    type: boolean
+    description: Include easy_localization setup with English and Arabic support
+    prompt: Include localization support?
+    default: true
+
+  include_maps:
+    type: boolean
+    description: Include Google Maps, Geolocator, and Geocoding packages
+    prompt: Include maps and location features?
+    default: false
+
+  include_image_picker:
+    type: boolean
+    description: Include image picker and file handling packages
+    prompt: Include image picker and file handling?
+    default: true
+
+  primary_color:
+    type: string
+    description: Primary color hex code (without #)
+    prompt: Enter primary color hex (without #)
+    default: "1976D2"
+
+  secondary_color:
+    type: string
+    description: Secondary color hex code (without #)
+    prompt: Enter secondary color hex (without #)
+    default: "424242"
