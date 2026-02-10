@@ -4,12 +4,21 @@ import 'package:mason/mason.dart';
 // Helper function to convert to snake_case
 String toSnakeCase(String text) {
   return text
+      .trim()
+      // Replace spaces with underscores first
+      .replaceAll(RegExp(r'\s+'), '_')
+      // Replace dashes with underscores
+      .replaceAll('-', '_')
+      // Handle camelCase by adding underscore before uppercase letters
       .replaceAllMapped(
         RegExp(r'[A-Z]'),
         (match) => '_${match.group(0)!.toLowerCase()}',
       )
-      .replaceAll(RegExp(r'^_'), '')
-      .replaceAll('-', '_')
+      // Remove leading underscores
+      .replaceAll(RegExp(r'^_+'), '')
+      // Replace multiple consecutive underscores with single underscore
+      .replaceAll(RegExp(r'_+'), '_')
+      // Convert to lowercase
       .toLowerCase();
 }
 
@@ -47,7 +56,7 @@ void run(HookContext context) async {
 
     if (pubGetResult.exitCode != 0) {
       context.logger.warn('flutter pub get encountered issues');
-      context.logger.warn('Please run manually: cd $snakeCaseName && flutter pub get');
+      context.logger.warn('Please run manually: cd "$snakeCaseName" && flutter pub get');
       progress.complete('Project created (manual setup required)');
       _printNextSteps(context, snakeCaseName, includeLocalization, true);
       return;
@@ -87,7 +96,7 @@ void _printNextSteps(HookContext context, String projectName, bool includeLocali
 
   if (needsManualSetup) {
     context.logger.info('⚠️  Manual setup required:');
-    context.logger.info('  1. cd $projectName');
+    context.logger.info('  1. cd "$projectName"');
     context.logger.info('  2. flutter pub get');
     context.logger.info('  3. flutter pub run build_runner build --delete-conflicting-outputs');
     if (includeLocalization) {
@@ -98,7 +107,7 @@ void _printNextSteps(HookContext context, String projectName, bool includeLocali
     }
   } else {
     context.logger.info('Next steps:');
-    context.logger.info('  1. cd $projectName');
+    context.logger.info('  1. cd "$projectName"');
     if (includeLocalization) {
       context.logger.info('  2. Download and add font files to assets/fonts/ (Cairo & Inter)');
       context.logger.info('  3. Run: flutter run --flavor dev -t lib/main_dev.dart');

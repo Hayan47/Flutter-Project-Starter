@@ -30,7 +30,8 @@ The project follows Clean Architecture with three main layers:
 - **State Management**: flutter_bloc, equatable
 - **Dependency Injection**: get_it, injectable
 - **Routing**: go_router
-- **Networking**: dio, connectivity_plus
+- **Networking**: dio, connectivity_plus{{#use_jwt_auth}}
+- **Authentication**: JWT with automatic token refresh (synchronized package){{/use_jwt_auth}}
 - **Storage**: shared_preferences, hive{{#include_localization}}
 - **Localization**: easy_localization (English & Arabic){{/include_localization}}{{#include_image_picker}}
 - **Image Handling**: cached_network_image, image_picker{{/include_image_picker}}
@@ -158,7 +159,29 @@ logger.error('Error message', error, stackTrace);
 final apiClient = getIt<ApiClient>();
 final response = await apiClient.get('/endpoint');
 ```
+{{#use_jwt_auth}}
+#### JWT Authentication
 
+The ApiClient includes automatic JWT token refresh mechanism:
+
+- **Token Storage**: Access and refresh tokens are stored securely in local storage
+- **Automatic Bearer Token**: Tokens are automatically added to request headers
+- **401 Handling**: When a request fails with 401, the refresh token is used automatically
+- **Retry Mechanism**: Failed requests are retried after successful token refresh
+- **Thread-Safe**: Uses lock mechanism to prevent concurrent refresh requests
+
+```dart
+// Set authentication token after login
+await apiClient.setAuthToken(accessToken);
+
+// Clear tokens on logout
+await apiClient.clearAuthToken();
+```
+
+**Token Refresh Configuration:**
+- Refresh endpoint: `/auth/token/refresh` (configurable in `AppConstants.tokenRefreshEndpoint`)
+- Requires backend to return: `{"access": "new_token", "refresh": "new_refresh_token"}`
+{{/use_jwt_auth}}
 ### LocalStorageService
 ```dart
 final storage = getIt<LocalStorageService>();

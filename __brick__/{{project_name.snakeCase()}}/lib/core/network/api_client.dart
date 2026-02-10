@@ -6,15 +6,18 @@ import 'package:{{project_name.snakeCase()}}/config/env_config.dart';
 import 'package:{{project_name.snakeCase()}}/core/storage/local_storage_service.dart';
 import 'package:{{project_name.snakeCase()}}/shared/constants/app_constants.dart';
 import 'package:injectable/injectable.dart';
+{{#use_jwt_auth}}
 import 'package:synchronized/synchronized.dart';
+{{/use_jwt_auth}}
 
 @lazySingleton
 class ApiClient {
   late final Dio _dio;
   final LoggerService _logger;
   final LocalStorageService _storage;
-
+{{#use_jwt_auth}}
   final _refreshLock = Lock();
+{{/use_jwt_auth}}
 
   ApiClient({
     required LoggerService logger,
@@ -40,6 +43,7 @@ class ApiClient {
   }
 
   Dio get dio => _dio;
+{{#use_jwt_auth}}
 
   Future<void> setAuthToken(String token) async {
     await _storage.setString(AppConstants.tokenKey, token);
@@ -49,16 +53,20 @@ class ApiClient {
     await _storage.remove(AppConstants.tokenKey);
     await _storage.remove(AppConstants.refreshTokenKey);
   }
+{{/use_jwt_auth}}
 
   void _onRequest(RequestOptions options, RequestInterceptorHandler handler) {
+{{#use_jwt_auth}}
     final token = _storage.getString(AppConstants.tokenKey);
     if (token != null && token.isNotEmpty) {
       options.headers['Authorization'] = 'Bearer $token';
     }
+{{/use_jwt_auth}}
     handler.next(options);
   }
 
   Future<void> _onError(DioException e, ErrorInterceptorHandler handler) async {
+{{#use_jwt_auth}}
     if (e.response?.statusCode != 401) {
       return handler.next(e);
     }
@@ -95,7 +103,12 @@ class ApiClient {
 
       return handler.reject(e);
     });
+{{/use_jwt_auth}}
+{{^use_jwt_auth}}
+    handler.next(e);
+{{/use_jwt_auth}}
   }
+{{#use_jwt_auth}}
 
   Future<bool> _tryRefreshToken() async {
     try {
@@ -139,4 +152,5 @@ class ApiClient {
       ),
     );
   }
+{{/use_jwt_auth}}
 }

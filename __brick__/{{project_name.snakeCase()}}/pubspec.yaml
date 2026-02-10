@@ -28,7 +28,8 @@ dependencies:
 
   # Network
   dio: ^5.7.0
-  connectivity_plus: ^6.1.1
+  connectivity_plus: ^6.1.1{{#use_jwt_auth}}
+  synchronized: ^3.3.0+3{{/use_jwt_auth}}
 
   # Local Storage
   shared_preferences: ^2.3.3

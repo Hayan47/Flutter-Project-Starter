@@ -50,6 +50,12 @@ vars:
     prompt: Include image picker and file handling?
     default: true
 
+  use_jwt_auth:
+    type: boolean
+    description: Include JWT token refresh mechanism with automatic retry on 401 errors
+    prompt: Include JWT authentication with token refresh?
+    default: true
+
   primary_color:
     type: string
     description: Primary color hex code (without #)
