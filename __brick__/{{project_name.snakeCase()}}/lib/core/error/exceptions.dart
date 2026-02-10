@@ -31,3 +31,16 @@ class NotFoundException implements Exception {
 
   NotFoundException(this.message);
 }
+
+class ForbiddenException implements Exception {
+  final String message;
+
+  ForbiddenException({required this.message});
+}
+
+class ValidationException implements Exception {
+  final String message;
+  final dynamic errors;
+
+  ValidationException({required this.message, this.errors});
+}

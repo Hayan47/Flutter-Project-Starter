@@ -2,21 +2,30 @@ import 'package:dio/dio.dart';
 import 'package:{{project_name.snakeCase()}}/core/error/exceptions.dart';
 import 'package:{{project_name.snakeCase()}}/core/network/dio_interceptor.dart';
 import 'package:{{project_name.snakeCase()}}/core/services/logger_service.dart';
+import 'package:{{project_name.snakeCase()}}/config/env_config.dart';
+import 'package:{{project_name.snakeCase()}}/core/storage/local_storage_service.dart';
+import 'package:{{project_name.snakeCase()}}/shared/constants/app_constants.dart';
+import 'package:injectable/injectable.dart';
+import 'package:synchronized/synchronized.dart';
 
+@lazySingleton
 class ApiClient {
   late final Dio _dio;
   final LoggerService _logger;
-  final String baseUrl;
+  final LocalStorageService _storage;
+
+  final _refreshLock = Lock();
 
   ApiClient({
-    required this.baseUrl,
     required LoggerService logger,
-  }) : _logger = logger {
+    required LocalStorageService storage,
+  }) : _logger = logger,
+       _storage = storage {
     _dio = Dio(
       BaseOptions(
-        baseUrl: baseUrl,
-        connectTimeout: const Duration(seconds: 30),
-        receiveTimeout: const Duration(seconds: 30),
+        baseUrl: EnvConfig.baseUrl,
+        connectTimeout: const Duration(seconds: AppConstants.apiTimeoutSeconds),
+        receiveTimeout: const Duration(seconds: AppConstants.apiTimeoutSeconds),
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
@@ -24,150 +33,110 @@ class ApiClient {
       ),
     );
 
-    _dio.interceptors.add(DioInterceptor(logger: _logger));
+    _dio.interceptors.addAll([
+      InterceptorsWrapper(onRequest: _onRequest, onError: _onError),
+      if (EnvConfig.isDevelopment) DioInterceptor(logger: _logger),
+    ]);
   }
 
   Dio get dio => _dio;
 
-  void setAuthToken(String token) {
-    _dio.options.headers['Authorization'] = 'Bearer $token';
+  Future<void> setAuthToken(String token) async {
+    await _storage.setString(AppConstants.tokenKey, token);
   }
 
-  void clearAuthToken() {
-    _dio.options.headers.remove('Authorization');
+  Future<void> clearAuthToken() async {
+    await _storage.remove(AppConstants.tokenKey);
+    await _storage.remove(AppConstants.refreshTokenKey);
   }
 
-  Future<Response> get(
-    String path, {
-    Map<String, dynamic>? queryParameters,
-    Options? options,
-  }) async {
-    try {
-      final response = await _dio.get(
-        path,
-        queryParameters: queryParameters,
-        options: options,
-      );
-      return response;
-    } on DioException catch (e) {
-      throw _handleDioError(e);
+  void _onRequest(RequestOptions options, RequestInterceptorHandler handler) {
+    final token = _storage.getString(AppConstants.tokenKey);
+    if (token != null && token.isNotEmpty) {
+      options.headers['Authorization'] = 'Bearer $token';
     }
+    handler.next(options);
   }
 
-  Future<Response> post(
-    String path, {
-    dynamic data,
-    Map<String, dynamic>? queryParameters,
-    Options? options,
-  }) async {
-    try {
-      final response = await _dio.post(
-        path,
-        data: data,
-        queryParameters: queryParameters,
-        options: options,
-      );
-      return response;
-    } on DioException catch (e) {
-      throw _handleDioError(e);
+  Future<void> _onError(DioException e, ErrorInterceptorHandler handler) async {
+    if (e.response?.statusCode != 401) {
+      return handler.next(e);
     }
-  }
 
-  Future<Response> put(
-    String path, {
-    dynamic data,
-    Map<String, dynamic>? queryParameters,
-    Options? options,
-  }) async {
-    try {
-      final response = await _dio.put(
-        path,
-        data: data,
-        queryParameters: queryParameters,
-        options: options,
-      );
-      return response;
-    } on DioException catch (e) {
-      throw _handleDioError(e);
+    // Prevent infinite loop when the refresh endpoint itself returns 401
+    if (e.requestOptions.path.contains(AppConstants.tokenRefreshEndpoint)) {
+      await clearAuthToken();
+      return handler.reject(e);
     }
-  }
 
-  Future<Response> delete(
-    String path, {
-    dynamic data,
-    Map<String, dynamic>? queryParameters,
-    Options? options,
-  }) async {
-    try {
-      final response = await _dio.delete(
-        path,
-        data: data,
-        queryParameters: queryParameters,
-        options: options,
-      );
-      return response;
-    } on DioException catch (e) {
-      throw _handleDioError(e);
-    }
-  }
+    await _refreshLock.synchronized(() async {
+      final currentToken = _storage.getString(AppConstants.tokenKey);
+      final requestToken = (e.requestOptions.headers['Authorization']
+              as String?)
+          ?.replaceFirst('Bearer ', '');
 
-  Future<Response> patch(
-    String path, {
-    dynamic data,
-    Map<String, dynamic>? queryParameters,
-    Options? options,
-  }) async {
-    try {
-      final response = await _dio.patch(
-        path,
-        data: data,
-        queryParameters: queryParameters,
-        options: options,
-      );
-      return response;
-    } on DioException catch (e) {
-      throw _handleDioError(e);
-    }
-  }
-
-  Exception _handleDioError(DioException error) {
-    _logger.error('DioException occurred', error);
-
-    switch (error.type) {
-      case DioExceptionType.connectionTimeout:
-      case DioExceptionType.sendTimeout:
-      case DioExceptionType.receiveTimeout:
-        return NetworkException('Connection timeout. Please check your internet connection.');
-
-      case DioExceptionType.badResponse:
-        final statusCode = error.response?.statusCode;
-        final message = error.response?.data['message'] ?? error.message ?? 'Server error';
-
-        if (statusCode == 401) {
-          return UnauthorizedException(message);
-        } else if (statusCode == 404) {
-          return NotFoundException(message);
-        } else {
-          return ServerException(
-            message: message,
-            statusCode: statusCode,
-          );
+      // Token was already refreshed by a concurrent request — just retry
+      if (currentToken != null &&
+          currentToken.isNotEmpty &&
+          currentToken != requestToken) {
+        try {
+          return handler.resolve(await _retryRequest(e.requestOptions));
+        } catch (_) {
+          return handler.reject(e);
         }
+      }
 
-      case DioExceptionType.cancel:
-        return ServerException(message: 'Request cancelled');
+      final refreshed = await _tryRefreshToken();
+      if (refreshed) {
+        try {
+          return handler.resolve(await _retryRequest(e.requestOptions));
+        } catch (_) {}
+      }
 
-      case DioExceptionType.connectionError:
-        return NetworkException('No internet connection');
+      return handler.reject(e);
+    });
+  }
 
-      case DioExceptionType.badCertificate:
-        return ServerException(message: 'Certificate verification failed');
+  Future<bool> _tryRefreshToken() async {
+    try {
+      final refreshToken = _storage.getString(AppConstants.refreshTokenKey);
+      if (refreshToken == null || refreshToken.isEmpty) return false;
 
-      case DioExceptionType.unknown:
-      default:
-        return ServerException(
-          message: error.message ?? 'An unexpected error occurred',
-        );
+      final response = await _dio.post(
+        AppConstants.tokenRefreshEndpoint,
+        data: {'refresh': refreshToken},
+      );
+
+      final newAccessToken = response.data['access'] as String?;
+      final newRefreshToken = response.data['refresh'] as String?;
+
+      if (newAccessToken == null) return false;
+
+      await _storage.setString(AppConstants.tokenKey, newAccessToken);
+      if (newRefreshToken != null) {
+        await _storage.setString(AppConstants.refreshTokenKey, newRefreshToken);
+      }
+      return true;
+    } catch (e) {
+      _logger.error('Token refresh failed', e);
+      await clearAuthToken();
+      return false;
     }
+  }
+
+  Future<Response> _retryRequest(RequestOptions requestOptions) {
+    final token = _storage.getString(AppConstants.tokenKey);
+    return _dio.request(
+      requestOptions.path,
+      data: requestOptions.data,
+      queryParameters: requestOptions.queryParameters,
+      options: Options(
+        method: requestOptions.method,
+        headers: {
+          ...requestOptions.headers,
+          if (token != null) 'Authorization': 'Bearer $token',
+        },
+      ),
+    );
   }
 }

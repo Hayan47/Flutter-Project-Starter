@@ -112,6 +112,14 @@ flutter build apk --flavor prod -t lib/main_prod.dart
 flutter clean && flutter pub get && flutter pub run build_runner build --delete-conflicting-outputs
 ```
 
+## App Naming Configuration
+
+The app display name is automatically configured to show in Title Case with spaces on device home screens:
+- **Android**: Configured in `android/app/src/main/AndroidManifest.xml` with `android:label="{{project_name.titleCase()}}"`
+- **iOS**: Configured in `ios/Runner/Info.plist` with `CFBundleDisplayName` and `CFBundleName`
+
+Example: If project name is `my_awesome_app`, the app displays as "My Awesome App" on devices.
+
 ## Environment Configuration
 
 Environments are configured in `lib/config/env_config.dart`:

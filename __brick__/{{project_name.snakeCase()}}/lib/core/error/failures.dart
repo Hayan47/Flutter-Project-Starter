@@ -32,3 +32,7 @@ class UnauthorizedFailure extends Failure {
 class NotFoundFailure extends Failure {
   const NotFoundFailure([super.message = 'Resource not found']);
 }
+
+class ForbiddenFailure extends Failure {
+  const ForbiddenFailure([super.message = 'Access forbidden']);
+}

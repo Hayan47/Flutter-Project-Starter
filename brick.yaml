@@ -1,6 +1,6 @@
 name: flutter_clean_architecture
 description: A Flutter project template with Clean Architecture, BLoC, multi-environment setup, and comprehensive core infrastructure
-version: 1.0.0
+version: 1.0.1
 
 vars:
   project_name:
