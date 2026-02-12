@@ -59,6 +59,8 @@ dependencies:
   geocoding: ^2.1.1
 {{/include_maps}}
 
+  lottie: ^3.3.1
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -79,6 +81,7 @@ flutter:
     - assets/translations/{{/include_localization}}
     - assets/images/
     - assets/icons/
+    - assets/lottie/
 {{#include_localization}}
   # Custom Fonts
   # TODO: Add font files to assets/fonts/ directory
