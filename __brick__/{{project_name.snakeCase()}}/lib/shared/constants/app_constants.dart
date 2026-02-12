@@ -1,10 +1,10 @@
 class AppConstants {
   static const String appName = '{{project_name.titleCase()}}';
 
-  // Storage Keys{{#use_jwt_auth}}
+  // Storage Keys
+  {{#use_jwt_auth}}
   static const String tokenKey = 'auth_token';
   static const String refreshTokenKey = 'refresh_token';{{/use_jwt_auth}}
-  static const String userKey = 'user_data';
   static const String languageKey = 'language';
   static const String themeKey = 'theme_mode';
 

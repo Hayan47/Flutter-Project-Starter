@@ -2,19 +2,6 @@
 {{/include_localization}}import 'package:flutter/material.dart';
 
 extension ContextExtension on BuildContext {
-  // Navigation
-  void pop<T>([T? result]) => Navigator.of(this).pop(result);
-
-  Future<T?> push<T>(Widget page) {
-    return Navigator.of(this).push(MaterialPageRoute(builder: (_) => page));
-  }
-
-  Future<T?> pushReplacement<T>(Widget page) {
-    return Navigator.of(
-      this,
-    ).pushReplacement(MaterialPageRoute(builder: (_) => page));
-  }
-
   // Theme
   ThemeData get theme => Theme.of(this);
   TextTheme get textTheme => Theme.of(this).textTheme;
@@ -23,8 +10,8 @@ extension ContextExtension on BuildContext {
 
   // MediaQuery
   Size get screenSize => MediaQuery.of(this).size;
-  double get screenWidth => MediaQuery.of(this).size.width;
-  double get screenHeight => MediaQuery.of(this).size.height;
+  double get screenWidth => MediaQuery.sizeOf(this).width;
+  double get screenHeight => MediaQuery.sizeOf(this).height;
   EdgeInsets get padding => MediaQuery.of(this).padding;
   EdgeInsets get viewInsets => MediaQuery.of(this).viewInsets;
 

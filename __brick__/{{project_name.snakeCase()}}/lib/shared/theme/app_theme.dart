@@ -92,7 +92,7 @@ class AppTheme {
       elevatedButtonTheme: _elevatedButtonTheme(locale, colorScheme),
       textButtonTheme: _textButtonTheme(locale, colorScheme),
       outlinedButtonTheme: _outlinedButtonTheme(locale, colorScheme),
-      inputDecorationTheme: _inputDecorationTheme(colorScheme, isDark),
+      inputDecorationTheme: _inputDecorationTheme(colorScheme, isDark, locale),
       floatingActionButtonTheme: _fabTheme(colorScheme),
       dividerTheme: _dividerTheme(isDark),
       iconTheme: _iconTheme(colorScheme, isDark),
@@ -112,9 +112,10 @@ class AppTheme {
     bool isDark,
   ) {
     return AppBarTheme(
-      backgroundColor: isDark ? AppColors.darkSurface : AppColors.secondary,
+      backgroundColor: AppColors.primary,
       foregroundColor: AppColors.textOnPrimary,
       elevation: 0,
+      surfaceTintColor: Colors.transparent,
       centerTitle: false,
       titleTextStyle: AppFonts.titleLarge(
         locale,
@@ -144,7 +145,7 @@ class AppTheme {
         elevation: 2,
         shadowColor: AppColors.shadow,
         padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
         textStyle: AppFonts.button(locale),
       ),
     );
@@ -181,31 +182,41 @@ class AppTheme {
   static InputDecorationTheme _inputDecorationTheme(
     ColorScheme colorScheme,
     bool isDark,
+    Locale locale,
   ) {
     return InputDecorationTheme(
       filled: true,
       fillColor: isDark ? AppColors.darkSurface : AppColors.surface,
       border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(34),
         borderSide: BorderSide(color: colorScheme.outline),
       ),
       enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(34),
         borderSide: BorderSide(color: colorScheme.outline),
       ),
       focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: colorScheme.primary, width: 2),
+        borderRadius: BorderRadius.circular(34),
+        borderSide: BorderSide(color: colorScheme.primary, width: 0.5),
       ),
       errorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: colorScheme.error),
+        borderRadius: BorderRadius.circular(34),
+        borderSide: BorderSide(color: colorScheme.error, width: 0.5),
       ),
       focusedErrorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: colorScheme.error, width: 2),
+        borderRadius: BorderRadius.circular(34),
+        borderSide: BorderSide(color: colorScheme.error, width: 0.8),
       ),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 11),
+      labelStyle: AppFonts.bodyLargeStyle(
+        locale,
+      ).copyWith(fontWeight: AppFonts.light, color: AppColors.textSecondary),
+      hintStyle: AppFonts.bodyMediumStyle(
+        locale,
+      ).copyWith(fontWeight: AppFonts.light, color: AppColors.textSecondary),
+      errorStyle: AppFonts.bodySmallStyle(
+        locale,
+      ).copyWith(fontWeight: AppFonts.light, fontSize: 10),
     );
   }
 
