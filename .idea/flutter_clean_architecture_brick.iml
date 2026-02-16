@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$">
+      <excludeFolder url="file://$MODULE_DIR$/__brick__/{{project_name.snakeCase()}}/.dart_tool" />
+      <excludeFolder url="file://$MODULE_DIR$/__brick__/{{project_name.snakeCase()}}/.pub" />
+      <excludeFolder url="file://$MODULE_DIR$/__brick__/{{project_name.snakeCase()}}/build" />
+      <excludeFolder url="file://$MODULE_DIR$/hooks/.dart_tool" />
+      <excludeFolder url="file://$MODULE_DIR$/hooks/.pub" />
+      <excludeFolder url="file://$MODULE_DIR$/hooks/build" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+  </component>
+</module>

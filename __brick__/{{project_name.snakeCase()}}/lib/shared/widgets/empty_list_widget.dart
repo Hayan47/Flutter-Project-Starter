@@ -1,5 +1,5 @@
-import 'package:easy_localization/easy_localization.dart';
-import 'package:{{project_name.snakeCase()}}/shared/extensions/context_extension.dart';
+{{#include_localization}}import 'package:easy_localization/easy_localization.dart';
+{{/include_localization}}import 'package:{{project_name.snakeCase()}}/shared/extensions/context_extension.dart';
 import 'package:{{project_name.snakeCase()}}/shared/theme/app_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
@@ -36,7 +36,12 @@ class EmptyListWidget extends StatelessWidget {
 
             // title
             Text(
-              title?.tr() ?? 'There is no items in this list!'.tr(),
+              {{#include_localization}}
+              (title ?? 'There is no items in this list!').tr()
+              {{/include_localization}}
+              {{^include_localization}}
+              title ?? 'There is no items in this list!'
+              {{/include_localization}},
               style: context.textTheme.titleLarge?.copyWith(
                 fontWeight: AppFonts.bold,
                 color: Theme.of(context).colorScheme.onSurface,

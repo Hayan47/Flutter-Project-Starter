@@ -1,0 +1,47 @@
+import 'dart:io';
+
+import 'package:device_info_plus/device_info_plus.dart';
+import 'package:injectable/injectable.dart';
+import 'package:uuid/uuid.dart';
+
+import '../storage/local_storage_service.dart';
+
+@lazySingleton
+class DeviceInfoService {
+  final DeviceInfoPlugin deviceInfo;
+  final LocalStorageService storage;
+
+  DeviceInfoService({required this.deviceInfo, required this.storage});
+
+  Future<String> getDeviceId() async {
+    try {
+      if (Platform.isAndroid) {
+        AndroidDeviceInfo androidInfo = await deviceInfo.androidInfo;
+        // Use a combination of identifiers for uniqueness
+        return '${androidInfo.brand}_${androidInfo.model}_${androidInfo.id}';
+      } else if (Platform.isIOS) {
+        IosDeviceInfo iosInfo = await deviceInfo.iosInfo;
+        return iosInfo.identifierForVendor ?? 'unknown_ios_device';
+      }
+    } catch (e) {
+      // Fallback to a generated UUID stored in SharedPreferences
+      return await _getFallbackDeviceId();
+    }
+    return 'unknown_device';
+  }
+
+  Future<String> _getFallbackDeviceId() async {
+    String? deviceId = storage.getString('device_id');
+
+    if (deviceId == null) {
+      deviceId = const Uuid().v4();
+      await storage.setString('device_id', deviceId);
+    }
+
+    return deviceId;
+  }
+
+  String getPlatform() {
+    return Platform.isIOS ? 'ios' : 'android';
+  }
+}

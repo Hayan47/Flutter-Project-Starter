@@ -1,56 +1,73 @@
+import 'package:injectable/injectable.dart';
 import 'package:logging/logging.dart';
 
+@lazySingleton
 class LoggerService {
   static final LoggerService _instance = LoggerService._internal();
-  factory LoggerService() => _instance;
 
-  late Logger _logger;
-
-  LoggerService._internal() {
-    _logger = Logger('{{project_name.pascalCase()}}');
-    _setupLogging();
+  factory LoggerService() {
+    return _instance;
   }
 
-  void _setupLogging() {
+  LoggerService._internal() {
+    _initializeLogging();
+  }
+
+  void _initializeLogging() {
     Logger.root.level = Level.ALL;
     Logger.root.onRecord.listen((record) {
-      final emoji = _getEmoji(record.level);
-      print(
-        '$emoji [${record.level.name}] ${record.time}: ${record.loggerName}: ${record.message}',
-      );
-      if (record.error != null) {
-        print('Error: ${record.error}');
-      }
-      if (record.stackTrace != null) {
-        print('StackTrace: ${record.stackTrace}');
-      }
+      // if (kDebugMode) {
+      print(_getFormattedLog(record));
+      // }
     });
   }
 
-  String _getEmoji(Level level) {
-    if (level == Level.SEVERE || level == Level.SHOUT) {
-      return '🔴';
-    } else if (level == Level.WARNING) {
-      return '🟡';
-    } else if (level == Level.INFO) {
-      return '🔵';
-    } else if (level == Level.CONFIG) {
-      return '🟢';
-    } else {
-      return '⚪';
-    }
+  String _getFormattedLog(LogRecord record) {
+    String color = _getColorCode(record.level);
+    String resetColor = '\x1B[0m';
+    String emoji = _getLevelEmoji(record.level);
+
+    return '$color[$emoji ${record.time}] ${record.loggerName}: ${record.level.name}: ${record.message}${record.error != null ? '\nError: ${record.error}' : ''}${record.stackTrace != null ? '\nStack Trace:\n${record.stackTrace}' : ''}$resetColor';
   }
 
-  void debug(String message) => _logger.fine(message);
+  String _getColorCode(Level level) {
+    if (level == Level.SEVERE) return '\x1B[31m'; // Red
+    if (level == Level.WARNING) return '\x1B[33m'; // Yellow
+    if (level == Level.INFO) return '\x1B[36m'; // Cyan
+    if (level == Level.FINE) return '\x1B[32m'; // Green
+    return '\x1B[37m'; // White (default)
+  }
 
-  void info(String message) => _logger.info(message);
+  String _getLevelEmoji(Level level) {
+    if (level == Level.SEVERE) return '🚨'; // Red alarm
+    if (level == Level.WARNING) return '⚠️'; // Warning sign
+    if (level == Level.INFO) return 'ℹ️'; // Information
+    if (level == Level.FINE) return '✅'; // Check mark
+    return '📝'; // Memo (default)
+  }
+
+  Logger getLogger(String name) {
+    return Logger(name);
+  }
+
+  void info(String message, [Object? error, StackTrace? stackTrace]) {
+    Logger.root.info(message, error, stackTrace);
+  }
 
   void warning(String message, [Object? error, StackTrace? stackTrace]) {
-    _logger.warning(message, error, stackTrace);
+    Logger.root.warning(message, error, stackTrace);
+  }
+
+  void severe(String message, [Object? error, StackTrace? stackTrace]) {
+    Logger.root.severe(message, error, stackTrace);
+  }
+
+  void fine(String message, [Object? error, StackTrace? stackTrace]) {
+    Logger.root.fine(message, error, stackTrace);
   }
 
   void error(String message, [Object? error, StackTrace? stackTrace]) {
-    _logger.severe(message, error, stackTrace);
+    Logger.root.severe(message, error, stackTrace);
   }
 
   void logApiRequest(String method, String url, Map<String, dynamic>? data) {

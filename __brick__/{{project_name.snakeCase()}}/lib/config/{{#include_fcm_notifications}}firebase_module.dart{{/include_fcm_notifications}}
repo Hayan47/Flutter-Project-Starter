@@ -1,0 +1,22 @@
+import 'package:device_info_plus/device_info_plus.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:injectable/injectable.dart';
+
+@module
+abstract class FirebaseModule {
+  // Firebase Messaging - only for dev/prod (mock doesn't use Firebase)
+  @lazySingleton
+  @Environment('dev')
+  @Environment('prod')
+  FirebaseMessaging get firebaseMessaging => FirebaseMessaging.instance;
+
+  // Local Notifications - needed in ALL environments (dev, prod, mock)
+  @lazySingleton
+  FlutterLocalNotificationsPlugin get localNotifications =>
+      FlutterLocalNotificationsPlugin();
+
+  // Device Info - needed in ALL environments (dev, prod, mock)
+  @lazySingleton
+  DeviceInfoPlugin get deviceInfo => DeviceInfoPlugin();
+}

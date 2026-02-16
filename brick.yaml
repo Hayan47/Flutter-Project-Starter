@@ -50,6 +50,12 @@ vars:
     prompt: Include image picker and file handling?
     default: true
 
+  include_fcm_notifications:
+    type: boolean
+    description: Include FCM notifications feature
+    prompt: Include FCM notifications feature?
+    default: true  
+
   use_jwt_auth:
     type: boolean
     description: Include JWT token refresh mechanism with automatic retry on 401 errors
@@ -67,3 +73,18 @@ vars:
     description: Secondary color hex code (without #)
     prompt: Enter secondary color hex (without #)
     default: "424242"
+
+  use_fvm:
+    type: boolean
+    description: Use Flutter Version Manager (FVM) for this project
+    prompt: Use FVM for Flutter version management?
+    default: false
+
+  flutter_version:
+    type: string
+    description: Flutter version to use with FVM (e.g., 3.24.0, stable)
+    prompt: Enter Flutter version for FVM (leave empty to skip)
+    default: "stable"
+
+environment:
+  mason: ">=0.1.0 <1.0.0"
