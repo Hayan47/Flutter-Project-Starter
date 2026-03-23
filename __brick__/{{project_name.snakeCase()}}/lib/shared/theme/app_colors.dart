@@ -71,4 +71,28 @@ class AppColors {
   static const Color darkBackground = Color(0xFF1A1A1A);
   static const Color darkSurface = Color(0xFF2C2C2C);
   static const Color secondaryDarker = Color(0xFF084159);
+
+  // SnackBar Colors - Success
+  static const Color successBackground = Color(0xFFEAF3DE);
+  static const Color successBorder = Color(0xFF639922);
+  static const Color successIconBackground = Color(0xFF3B6D11);
+  static const Color successText = Color(0xFF27500A);
+
+  // SnackBar Colors - Error
+  static const Color errorBackground = Color(0xFFFCEBEB);
+  static const Color errorBorder = Color(0xFFE24B4A);
+  static const Color errorIconBackground = Color(0xFFA32D2D);
+  static const Color errorText = Color(0xFF791F1F);
+
+  // SnackBar Colors - Warning
+  static const Color warningBackground = Color(0xFFFAEEDA);
+  static const Color warningBorder = Color(0xFFBA7517);
+  static const Color warningIconBackground = Color(0xFF854F0B);
+  static const Color warningText = Color(0xFF633806);
+
+  // SnackBar Colors - Info
+  static const Color infoBackground = Color(0xFFE6F1FB);
+  static const Color infoBorder = Color(0xFF378ADD);
+  static const Color infoIconBackground = Color(0xFF185FA5);
+  static const Color infoText = Color(0xFF0C447C);
 }

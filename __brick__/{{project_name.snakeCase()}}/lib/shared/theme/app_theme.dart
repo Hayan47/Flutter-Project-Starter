@@ -207,6 +207,10 @@ class AppTheme {
         borderRadius: BorderRadius.circular(34),
         borderSide: BorderSide(color: colorScheme.error, width: 0.8),
       ),
+      disabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(34),
+        borderSide: BorderSide(color: colorScheme.outline, width: 0.5),
+      ),
       contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 11),
       labelStyle: AppFonts.bodyLargeStyle(
         locale,

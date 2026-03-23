@@ -1,6 +1,8 @@
 {{#include_localization}}import 'package:easy_localization/easy_localization.dart';
 {{/include_localization}}import 'package:flutter/material.dart';
 
+import '../widgets/snack_bar.dart';
+
 extension ContextExtension on BuildContext {
   // Theme
   ThemeData get theme => Theme.of(this);
@@ -19,18 +21,30 @@ extension ContextExtension on BuildContext {
   bool get isMobile => screenWidth < 600;
   bool get isTablet => screenWidth >= 600 && screenWidth < 1024;
   bool get isDesktop => screenWidth >= 1024;
-{{#include_localization}}
+
   // Localization
   bool get isArabic => locale.languageCode == 'ar';
   bool get isEnglish => locale.languageCode == 'en';
-{{/include_localization}}
+
   // SnackBar
-  void showSnackBar(String message, {bool isError = false}) {
-    ScaffoldMessenger.of(this).showSnackBar(
+  void showSnackBar({
+    required String title,
+    required String message,
+    required SnackBarType type,
+    Duration duration = const Duration(seconds: 4),
+  }) {
+    final messenger = ScaffoldMessenger.of(this);
+
+    // Clear any existing SnackBar to prevent overlap
+    messenger.clearSnackBars();
+
+    messenger.showSnackBar(
       SnackBar(
-        content: Text(message),
-        backgroundColor: isError ? Colors.red : Colors.green,
-        behavior: SnackBarBehavior.floating,
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        duration: duration,
+        content: SnackBarContent(title: title, message: message, type: type),
       ),
     );
   }
