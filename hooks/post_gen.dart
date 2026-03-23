@@ -101,6 +101,19 @@ void run(HookContext context) async {
       context.logger.warn('build_runner had warnings (this is expected for new projects)');
     }
 
+    // Generate launcher icons for all flavors
+    progress.update('Generating launcher icons for all flavors...');
+    final iconResult = await Process.run(
+      useFvm ? 'fvm' : 'dart',
+      useFvm ? ['dart', 'run', 'flutter_launcher_icons'] : ['run', 'flutter_launcher_icons'],
+      workingDirectory: projectDir.path,
+    );
+
+    if (iconResult.exitCode != 0) {
+      context.logger.warn('Launcher icon generation had warnings');
+      context.logger.detail('You can regenerate later with: ${useFvm ? 'fvm ' : ''}dart run flutter_launcher_icons');
+    }
+
     progress.complete('Project setup complete!');
     _printNextSteps(context, snakeCaseName, includeLocalization, useFvm, flutterVersion, false);
 
@@ -156,5 +169,12 @@ void _printNextSteps(HookContext context, String projectName, bool includeLocali
     context.logger.info('');
   }
   context.logger.info('📖 See README.md and CLAUDE.md for more information');
+  context.logger.info('');
+  context.logger.info('🎨 Launcher icons have been generated for all flavors');
+  context.logger.info('   Replace placeholder icons in assets/icons/ with your own:');
+  context.logger.info('   • assets/icons/app_icon_dev.png (for dev)');
+  context.logger.info('   • assets/icons/app_icon_mock.png (for mock)');
+  context.logger.info('   • assets/icons/app_icon.png (for prod)');
+  context.logger.info('   Then run: ${useFvm ? 'fvm ' : ''}dart run flutter_launcher_icons');
   context.logger.info('');
 }

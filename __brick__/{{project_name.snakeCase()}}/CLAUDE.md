@@ -100,6 +100,28 @@ flutter analyze
 dart format .
 ```
 
+### Launcher Icons
+
+The project includes flavor-specific launcher icons configured for dev, mock, and prod environments:
+
+```bash
+# Regenerate all launcher icons for all flavors at once
+dart run flutter_launcher_icons
+```
+
+**Customizing Icons:**
+1. Replace placeholder icons in `assets/icons/`:
+   - `app_icon_dev.png` - Used for dev flavor (1024x1024 PNG)
+   - `app_icon_mock.png` - Used for mock flavor (1024x1024 PNG)
+   - `app_icon.png` - Used for production flavor (1024x1024 PNG)
+2. Optionally modify background colors in `flutter_launcher_icons-*.yaml` files
+3. Run: `dart run flutter_launcher_icons`
+
+**Icon Configuration:**
+- Dev: White background (#FFFFFF) with blue dev-branded icon
+- Mock: White background (#FFFFFF) with orange mock-branded icon
+- Prod: White background (#FFFFFF) with production-ready icon
+
 ### Building
 
 ```bash
@@ -217,3 +239,13 @@ await hive.put('boxName', 'key', data);
 6. **Use const constructors**
 7. **Implement Equatable for BLoC**
 8. **Write testable code**
+
+## Coding Preferences
+Full detail in `.claude/coding-preferences.md`. Key rules:
+- Reusable widgets over widget methods — one widget per file
+- BLoC provided in router, never inside the page
+- Composition over inheritance in entities
+- All use cases implement UseCase<Type, Params> abstract class
+- Either<Failure, T> for all error handling — never throw from repositories
+- Shimmer for loading states — never full page spinner
+- No hardcoded colors, strings, or URLs

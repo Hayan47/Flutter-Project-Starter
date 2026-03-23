@@ -19,6 +19,7 @@ A comprehensive Mason brick for generating Flutter projects with Clean Architect
 - ✅ **Maps** - Optional Google Maps and location services
 - ✅ **FVM Support** - Optional Flutter Version Manager integration
 - ✅ **Comprehensive Theme** - Material 3 with custom colors, fonts, and Lottie animations
+- ✅ **Launcher Icons** - Multi-flavor launcher icons with automatic generation
 - ✅ **Error Handling** - Using dartz Either pattern
 
 ## Installation
@@ -227,6 +228,42 @@ If you enabled JWT authentication during generation, the project includes:
 
 This is implemented in `lib/core/network/` with Dio interceptors.
 
+## Launcher Icons
+
+The project includes multi-flavor launcher icon support with automatic generation during project creation:
+
+- **Separate icons for each flavor** - Distinct icons for dev, mock, and prod environments
+- **Automatic generation** - Icons are generated automatically during `mason make`
+- **Android adaptive icons** - Customizable background colors with adaptive icon support
+- **iOS support** - Proper iOS icon generation with alpha channel removal
+- **Easy customization** - Replace placeholder icons and regenerate with a single command
+
+### Customizing Icons
+
+The generated project includes placeholder icons in `assets/icons/`:
+- `app_icon_dev.png` - Used for dev flavor (blue icon with "DEV" branding)
+- `app_icon_mock.png` - Used for mock flavor (orange icon with "MOCK" branding)
+- `app_icon.png` - Used for production flavor (clean design)
+
+To customize with your own icons:
+
+1. Replace the placeholder icons in `assets/icons/` with your own 1024x1024 PNG files
+2. Run the icon generation command:
+
+```bash
+# Regenerate all launcher icons for all flavors at once
+dart run flutter_launcher_icons
+```
+
+### Icon Configuration
+
+Each flavor has its own configuration file (`flutter_launcher_icons-*.yaml`):
+- **Dev**: White background (#FFFFFF) with blue dev-branded icon
+- **Mock**: White background (#FFFFFF) with orange mock-branded icon
+- **Prod**: White background (#FFFFFF) with production-ready icon
+
+You can modify the background colors by editing the `adaptive_icon_background` values in the config files.
+
 ## Next Steps After Generation
 
 1. **If localization is enabled**: Download and add font files to `assets/fonts/`
@@ -380,3 +417,13 @@ Feel free to customize this brick for your team's specific needs!
 ## License
 
 MIT License
+
+## Todo 
+
+1- add secure storage for tokens
+2- fix base url wrong parsing at env_config.dart
+3- add auth feature
+4- add responsive utility
+5- add application name differences for flavors (Done)
+6- add custom shared snackbar
+7- ~~add flutter launcher icons~~ (Done)

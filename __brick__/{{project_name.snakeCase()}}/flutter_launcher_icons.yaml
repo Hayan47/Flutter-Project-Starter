@@ -1,0 +1,14 @@
+# Base configuration file for flutter_launcher_icons
+# Use flavor-specific files for actual generation:
+#   - flutter_launcher_icons-dev.yaml
+#   - flutter_launcher_icons-mock.yaml
+#   - flutter_launcher_icons-prod.yaml
+
+flutter_launcher_icons:
+  android: "launcher_icon"
+  ios: true
+  image_path: "assets/icons/app_icon.png"
+  adaptive_icon_background: "#FFFFFF" # White
+  adaptive_icon_foreground: "assets/icons/app_icon.png"
+  remove_alpha_ios: true
+  min_sdk_android: 21
