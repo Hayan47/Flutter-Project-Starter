@@ -34,6 +34,9 @@ dependencies:
 
   # Local Storage
   shared_preferences: ^2.3.3
+{{#use_jwt_auth}}
+  flutter_secure_storage: ^9.2.2
+{{/use_jwt_auth}}
   hive: ^2.2.3
   hive_flutter: ^1.1.0
 {{#include_localization}}

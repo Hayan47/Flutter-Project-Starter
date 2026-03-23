@@ -3,10 +3,10 @@ import 'package:{{project_name.snakeCase()}}/core/error/exceptions.dart';
 import 'package:{{project_name.snakeCase()}}/core/network/dio_interceptor.dart';
 import 'package:{{project_name.snakeCase()}}/core/services/logger_service.dart';
 import 'package:{{project_name.snakeCase()}}/config/env_config.dart';
-import 'package:{{project_name.snakeCase()}}/core/storage/local_storage_service.dart';
 import 'package:{{project_name.snakeCase()}}/shared/constants/app_constants.dart';
 import 'package:injectable/injectable.dart';
 {{#use_jwt_auth}}
+import 'package:{{project_name.snakeCase()}}/core/storage/secure_storage_service.dart';
 import 'package:synchronized/synchronized.dart';
 {{/use_jwt_auth}}
 
@@ -14,16 +14,23 @@ import 'package:synchronized/synchronized.dart';
 class ApiClient {
   late final Dio _dio;
   final LoggerService _logger;
-  final LocalStorageService _storage;
 {{#use_jwt_auth}}
+  final SecureStorageService _secureStorage;
   final _refreshLock = Lock();
 {{/use_jwt_auth}}
 
+{{#use_jwt_auth}}
   ApiClient({
     required LoggerService logger,
-    required LocalStorageService storage,
+    required SecureStorageService secureStorage,
   }) : _logger = logger,
-       _storage = storage {
+       _secureStorage = secureStorage {
+{{/use_jwt_auth}}
+{{^use_jwt_auth}}
+  ApiClient({
+    required LoggerService logger,
+  }) : _logger = logger {
+{{/use_jwt_auth}}
     _dio = Dio(
       BaseOptions(
         baseUrl: EnvConfig.baseUrl,
@@ -46,18 +53,22 @@ class ApiClient {
 {{#use_jwt_auth}}
 
   Future<void> setAuthToken(String token) async {
-    await _storage.setString(AppConstants.tokenKey, token);
+    await _secureStorage.write(AppConstants.tokenKey, token);
+  }
+
+  Future<void> setRefreshToken(String token) async {
+    await _secureStorage.write(AppConstants.refreshTokenKey, token);
   }
 
   Future<void> clearAuthToken() async {
-    await _storage.remove(AppConstants.tokenKey);
-    await _storage.remove(AppConstants.refreshTokenKey);
+    await _secureStorage.delete(AppConstants.tokenKey);
+    await _secureStorage.delete(AppConstants.refreshTokenKey);
   }
 {{/use_jwt_auth}}
 
-  void _onRequest(RequestOptions options, RequestInterceptorHandler handler) {
+  void _onRequest(RequestOptions options, RequestInterceptorHandler handler) async {
 {{#use_jwt_auth}}
-    final token = _storage.getString(AppConstants.tokenKey);
+    final token = await _secureStorage.read(AppConstants.tokenKey);
     if (token != null && token.isNotEmpty) {
       options.headers['Authorization'] = 'Bearer $token';
     }
@@ -78,7 +89,7 @@ class ApiClient {
     }
 
     await _refreshLock.synchronized(() async {
-      final currentToken = _storage.getString(AppConstants.tokenKey);
+      final currentToken = await _secureStorage.read(AppConstants.tokenKey);
       final requestToken = (e.requestOptions.headers['Authorization']
               as String?)
           ?.replaceFirst('Bearer ', '');
@@ -112,7 +123,7 @@ class ApiClient {
 
   Future<bool> _tryRefreshToken() async {
     try {
-      final refreshToken = _storage.getString(AppConstants.refreshTokenKey);
+      final refreshToken = await_secureStorage.read(AppConstants.refreshTokenKey);
       if (refreshToken == null || refreshToken.isEmpty) return false;
 
       final response = await _dio.post(
@@ -125,9 +136,9 @@ class ApiClient {
 
       if (newAccessToken == null) return false;
 
-      await _storage.setString(AppConstants.tokenKey, newAccessToken);
+      await _secureStorage.write(AppConstants.tokenKey, newAccessToken);
       if (newRefreshToken != null) {
-        await _storage.setString(AppConstants.refreshTokenKey, newRefreshToken);
+        await _secureStorage.write(AppConstants.refreshTokenKey, newRefreshToken);
       }
       return true;
     } catch (e) {
@@ -137,8 +148,8 @@ class ApiClient {
     }
   }
 
-  Future<Response> _retryRequest(RequestOptions requestOptions) {
-    final token = _storage.getString(AppConstants.tokenKey);
+  Future<Response> _retryRequest(RequestOptions requestOptions) async {
+    final token = await _secureStorage.read(AppConstants.tokenKey);
     return _dio.request(
       requestOptions.path,
       data: requestOptions.data,

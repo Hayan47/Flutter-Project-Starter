@@ -170,10 +170,9 @@
       "languageVersion": "3.0"
     }
   ],
-  "generated": "2026-01-28T10:23:36.226279Z",
   "generator": "pub",
-  "generatorVersion": "3.7.0",
-  "flutterRoot": "file:///Users/jhussein/fvm/versions/3.29.0",
-  "flutterVersion": "3.29.0",
+  "generatorVersion": "3.10.0-290.4.beta",
+  "flutterRoot": "file:///Users/jhussein/fvm/versions/3.38.0",
+  "flutterVersion": "3.38.0",
   "pubCache": "file:///Users/jhussein/.pub-cache"
 }
