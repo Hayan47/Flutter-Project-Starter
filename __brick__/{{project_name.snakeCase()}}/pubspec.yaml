@@ -96,12 +96,14 @@ flutter:
     - assets/images/
     - assets/icons/
     - assets/lottie/
-{{#include_localization}}
   # Custom Fonts
   # TODO: Add font files to assets/fonts/ directory
   fonts:
+  {{#include_localization}}
     - family: Cairo
       fonts:
+        - asset: assets/fonts/Cairo-Light.ttf
+          weight: 300
         - asset: assets/fonts/Cairo-Regular.ttf
           weight: 400
         - asset: assets/fonts/Cairo-Medium.ttf
@@ -110,9 +112,14 @@ flutter:
           weight: 600
         - asset: assets/fonts/Cairo-Bold.ttf
           weight: 700
+        - asset: assets/fonts/Cairo-ExtraBold.ttf
+          weight: 800
+{{/include_localization}}
 
     - family: Inter
       fonts:
+        - asset: assets/fonts/Inter-Light.ttf
+          weight: 300
         - asset: assets/fonts/Inter-Regular.ttf
           weight: 400
         - asset: assets/fonts/Inter-Medium.ttf
@@ -121,4 +128,5 @@ flutter:
           weight: 600
         - asset: assets/fonts/Inter-Bold.ttf
           weight: 700
-{{/include_localization}}
+        - asset: assets/fonts/Inter-ExtraBold.ttf
+          weight: 800

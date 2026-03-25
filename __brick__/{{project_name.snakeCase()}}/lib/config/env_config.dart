@@ -12,9 +12,9 @@ class EnvConfig {
   static String get baseUrl {
     switch (_environment) {
       case Environment.dev:
-        return '{{dev_api_url}}';
+        return '{{{dev_api_url}}}';
       case Environment.prod:
-        return '{{prod_api_url}}';
+        return '{{{prod_api_url}}}';
       case Environment.mock:
         return 'https://mock-api.{{project_name.snakeCase()}}.com'; // Not used but required
     }

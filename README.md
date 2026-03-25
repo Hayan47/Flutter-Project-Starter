@@ -421,8 +421,8 @@ MIT License
 ## Todo 
 
 1- ~~add secure storage for tokens~~ (Done)
-2- fix base url wrong parsing at env_config.dart
-3- add auth feature
+2- ~~fix base url wrong parsing at env_config.dart~~ (Done)
+3- add auth feature with auth failure stream
 4- add responsive utility
 5- ~~add application name differences for flavors~~ (Done)
 6- ~~add custom shared snackbar~~ (Done)

@@ -116,11 +116,45 @@ String? _extractErrorMessage(Response? response) {
         return errorMap['message'].toString();
       }
     }
+
+    // Format 6: Field-level validation errors (Django/DRF style)
+    // { "username": ["Username already exists"], "email": ["Email is required"] }
+    final fieldErrors = _extractFieldValidationErrors(data);
+    if (fieldErrors != null) {
+      return fieldErrors;
+    }
   }
 
   // Fallback: if data is a string
   if (data is String && data.isNotEmpty) {
     return data;
+  }
+
+  return null;
+}
+
+/// Extracts field-level validation errors from Django/DRF style responses.
+/// Format: { "fieldName": ["Error message 1", "Error message 2"], ... }
+String? _extractFieldValidationErrors(Map<String, dynamic> data) {
+  // Filter out known top-level keys that aren't field errors
+  final knownKeys = {'message', 'error', 'detail', 'errors', 'status', 'code'};
+
+  for (final entry in data.entries) {
+    // Skip known non-field keys
+    if (knownKeys.contains(entry.key)) continue;
+
+    final value = entry.value;
+
+    // Handle array of errors: "username": ["Error 1", "Error 2"]
+    if (value is List && value.isNotEmpty) {
+      final firstError = value.first;
+      return firstError.toString();
+    }
+
+    // Handle single error string: "username": "Error message"
+    if (value is String && value.isNotEmpty) {
+      return value;
+    }
   }
 
   return null;

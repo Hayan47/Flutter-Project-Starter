@@ -8,6 +8,7 @@ import 'package:injectable/injectable.dart';
 {{#use_jwt_auth}}
 import 'package:{{project_name.snakeCase()}}/core/storage/secure_storage_service.dart';
 import 'package:synchronized/synchronized.dart';
+import 'dart:async';
 {{/use_jwt_auth}}
 
 @lazySingleton
@@ -17,6 +18,12 @@ class ApiClient {
 {{#use_jwt_auth}}
   final SecureStorageService _secureStorage;
   final _refreshLock = Lock();
+
+  // Stream to notify about auth failures
+  // Note: As a singleton, this controller lives for the app lifetime
+  // and doesn't need explicit disposal
+  final _authFailureController = StreamController<void>.broadcast();
+  Stream<void> get authFailureStream => _authFailureController.stream;
 {{/use_jwt_auth}}
 
 {{#use_jwt_auth}}
@@ -85,6 +92,7 @@ class ApiClient {
     // Prevent infinite loop when the refresh endpoint itself returns 401
     if (e.requestOptions.path.contains(AppConstants.tokenRefreshEndpoint)) {
       await clearAuthToken();
+      _authFailureController.add(null); // Notify auth failure
       return handler.reject(e);
     }
 
@@ -123,8 +131,14 @@ class ApiClient {
 
   Future<bool> _tryRefreshToken() async {
     try {
-      final refreshToken = await_secureStorage.read(AppConstants.refreshTokenKey);
-      if (refreshToken == null || refreshToken.isEmpty) return false;
+      final refreshToken = await _secureStorage.read(
+        AppConstants.refreshTokenKey,
+      );
+      if (refreshToken == null || refreshToken.isEmpty) {
+        await clearAuthToken();
+        _authFailureController.add(null);
+        return false;
+      }
 
       final response = await _dio.post(
         AppConstants.tokenRefreshEndpoint,
@@ -134,16 +148,24 @@ class ApiClient {
       final newAccessToken = response.data['access'] as String?;
       final newRefreshToken = response.data['refresh'] as String?;
 
-      if (newAccessToken == null) return false;
+      if (newAccessToken == null) {
+        await clearAuthToken();
+        _authFailureController.add(null);
+        return false;
+      }
 
       await _secureStorage.write(AppConstants.tokenKey, newAccessToken);
       if (newRefreshToken != null) {
-        await _secureStorage.write(AppConstants.refreshTokenKey, newRefreshToken);
+        await _secureStorage.write(
+          AppConstants.refreshTokenKey,
+          newRefreshToken,
+        );
       }
       return true;
     } catch (e) {
       _logger.error('Token refresh failed', e);
       await clearAuthToken();
+      _authFailureController.add(null);
       return false;
     }
   }

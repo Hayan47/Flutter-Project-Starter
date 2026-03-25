@@ -10,7 +10,7 @@ class AppConstants {
 
   // API Constants
   static const int apiTimeoutSeconds = 10;{{#use_jwt_auth}}
-  static const String tokenRefreshEndpoint = '/auth/token/refresh';{{/use_jwt_auth}}
+  static const String tokenRefreshEndpoint = '/auth/token/refresh/';{{/use_jwt_auth}}
   {{#include_fcm_notifications}}
   static const String getNotifications = '/notifications/';
   static const String registerToken = '/notifications/register-token/';
