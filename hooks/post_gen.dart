@@ -1,180 +1,235 @@
 import 'dart:io';
+
 import 'package:mason/mason.dart';
 
-String toSnakeCase(String text) {
-  return text
-      .trim()
-      .replaceAll(RegExp(r'\s+'), '_')
-      .replaceAll('-', '_')
-      .replaceAllMapped(
-        RegExp(r'[A-Z]'),
-        (match) => '_${match.group(0)!.toLowerCase()}',
-      )
-      .replaceAll(RegExp(r'^_+'), '')
-      .replaceAll(RegExp(r'_+'), '_')
-      .toLowerCase();
-}
-
-void run(HookContext context) async {
+Future<void> run(HookContext context) async {
+  // Folder is `{{project_name}}` (as entered); Dart package is snake_case.
   final projectName = context.vars['project_name'] as String;
-  final includeLocalization = context.vars['include_localization'] as bool;
+  final appId = context.vars['app_id'] as String;
   final useFvm = context.vars['use_fvm'] as bool? ?? false;
   final flutterVersion = context.vars['flutter_version'] as String? ?? 'stable';
 
-  final progress = context.logger.progress('Setting up project');
+  final setup = _Setup(
+    context: context,
+    projectName: projectName,
+    appId: appId,
+    useFvm: useFvm,
+    flutterVersion: flutterVersion,
+  );
 
-  try {
-    final snakeCaseName = toSnakeCase(projectName);
-    final currentDir = Directory.current;
-    final projectDir = Directory('${currentDir.path}/$snakeCaseName');
-
-    if (!projectDir.existsSync()) {
-      context.logger.warn('Project directory not found for automated setup');
-      context.logger.warn('Expected: ${projectDir.path}');
-      context.logger.warn('This is okay - you can set up manually');
-
-      progress.complete('Project created (manual setup required)');
-      _printNextSteps(context, snakeCaseName, includeLocalization, useFvm, flutterVersion, true);
-      return;
-    }
-
-    if (useFvm) {
-      progress.update('Setting up FVM with Flutter $flutterVersion...');
-      final fvmUseResult = await Process.run(
-        'fvm',
-        ['use', flutterVersion, '--force'],
-        workingDirectory: projectDir.path,
-      );
-
-      if (fvmUseResult.exitCode != 0) {
-        context.logger.warn('FVM setup encountered issues');
-        context.logger.warn('stderr: ${fvmUseResult.stderr}');
-        context.logger.warn('Please ensure FVM is installed: dart pub global activate fvm');
-        context.logger.warn('Then run manually: cd "$snakeCaseName" && fvm use $flutterVersion');
-        progress.complete('Project created (manual FVM setup required)');
-        _printNextSteps(context, snakeCaseName, includeLocalization, useFvm, flutterVersion, true);
-        return;
-      }
-    }
-
-    final flutterCmd = useFvm ? 'fvm' : 'flutter';
-    final flutterArgs = useFvm ? ['flutter'] : <String>[];
-
-    progress.update('Creating platform files for Android and iOS...');
-    final createResult = await Process.run(
-      flutterCmd,
-      [...flutterArgs, 'create', '.', '--platforms=android,ios'],
-      workingDirectory: projectDir.path,
-    );
-
-    if (createResult.exitCode != 0) {
-      context.logger.warn('flutter create encountered issues');
-      context.logger.warn('Please run manually: cd "$snakeCaseName" && ${useFvm ? 'fvm flutter' : 'flutter'} create . --platforms=android,ios');
-      progress.complete('Project created (manual setup required)');
-      _printNextSteps(context, snakeCaseName, includeLocalization, useFvm, flutterVersion, true);
-      return;
-    }
-
-    progress.update('Running ${useFvm ? 'fvm flutter' : 'flutter'} pub get...');
-    final pubGetResult = await Process.run(
-      flutterCmd,
-      [...flutterArgs, 'pub', 'get'],
-      workingDirectory: projectDir.path,
-    );
-
-    if (pubGetResult.exitCode != 0) {
-      context.logger.warn('flutter pub get encountered issues');
-      context.logger.warn('Please run manually: cd "$snakeCaseName" && ${useFvm ? 'fvm flutter' : 'flutter'} pub get');
-      progress.complete('Project created (manual setup required)');
-      _printNextSteps(context, snakeCaseName, includeLocalization, useFvm, flutterVersion, true);
-      return;
-    }
-
-    progress.update('Running build_runner...');
-    final buildRunnerResult = await Process.run(
-      flutterCmd,
-      [...flutterArgs, 'pub', 'run', 'build_runner', 'build', '--delete-conflicting-outputs'],
-      workingDirectory: projectDir.path,
-    );
-
-    if (buildRunnerResult.exitCode != 0) {
-      context.logger.warn('build_runner had warnings (this is expected for new projects)');
-    }
-
-    // Generate launcher icons for all flavors
-    progress.update('Generating launcher icons for all flavors...');
-    final iconResult = await Process.run(
-      useFvm ? 'fvm' : 'dart',
-      useFvm ? ['dart', 'run', 'flutter_launcher_icons'] : ['run', 'flutter_launcher_icons'],
-      workingDirectory: projectDir.path,
-    );
-
-    if (iconResult.exitCode != 0) {
-      context.logger.warn('Launcher icon generation had warnings');
-      context.logger.detail('You can regenerate later with: ${useFvm ? 'fvm ' : ''}dart run flutter_launcher_icons');
-    }
-
-    progress.complete('Project setup complete!');
-    _printNextSteps(context, snakeCaseName, includeLocalization, useFvm, flutterVersion, false);
-
-  } catch (e) {
-    context.logger.err('Error during setup: $e');
-    progress.fail('Setup failed');
-    final snakeCaseName = toSnakeCase(projectName);
-    _printNextSteps(context, snakeCaseName, includeLocalization, useFvm, flutterVersion, true);
+  final projectDir = Directory('${Directory.current.path}/$projectName');
+  if (!projectDir.existsSync()) {
+    context.logger
+      ..warn('Project directory not found for automated setup')
+      ..warn('Expected: ${projectDir.path}');
+    setup.printNextSteps(needsManualSetup: true);
+    return;
   }
+
+  final ok = await setup.runAll(projectDir.path);
+  setup.printNextSteps(needsManualSetup: !ok);
 }
 
-void _printNextSteps(HookContext context, String projectName, bool includeLocalization, bool useFvm, String flutterVersion, bool needsManualSetup) {
-  final flutterCmd = useFvm ? 'fvm flutter' : 'flutter';
+class _Setup {
+  _Setup({
+    required this.context,
+    required this.projectName,
+    required this.appId,
+    required this.useFvm,
+    required this.flutterVersion,
+  });
 
-  context.logger.info('');
-  context.logger.success('🎉 Project created successfully!');
-  context.logger.info('');
-  context.logger.info('📂 Project: $projectName');
-  if (useFvm) {
-    context.logger.info('🔧 Flutter Version: $flutterVersion (via FVM)');
+  final HookContext context;
+  final String projectName;
+  final String appId;
+  final bool useFvm;
+  final String flutterVersion;
+
+  Logger get logger => context.logger;
+
+  /// `flutter` or `fvm flutter`
+  String get flutter => useFvm ? 'fvm flutter' : 'flutter';
+
+  /// `dart` or `fvm dart`
+  String get dart => useFvm ? 'fvm dart' : 'dart';
+
+  /// `flutter create` would otherwise derive the package name from the folder
+  /// (invalid for names like `my-app`) and default the org to com.example.
+  String get createCommand {
+    final org = appId.substring(0, appId.lastIndexOf('.'));
+    return '$flutter create . --platforms=android,ios '
+        '--project-name ${projectName.snakeCase} --org $org';
   }
-  context.logger.info('');
 
-  if (needsManualSetup) {
-    context.logger.info('⚠️  Manual setup required:');
-    context.logger.info('  1. cd "$projectName"');
-    if (useFvm) {
-      context.logger.info('  2. fvm use $flutterVersion');
-      context.logger.info('  3. $flutterCmd create . --platforms=android,ios');
-      context.logger.info('  4. $flutterCmd pub get');
-      context.logger.info('  5. $flutterCmd pub run build_runner build --delete-conflicting-outputs');
-      context.logger.info('  6. Run: $flutterCmd run --flavor dev -t lib/main_dev.dart');
-    } else {
-      context.logger.info('  2. flutter create . --platforms=android,ios');
-      context.logger.info('  3. flutter pub get');
-      context.logger.info('  4. flutter pub run build_runner build --delete-conflicting-outputs');
-      context.logger.info('  5. Run: flutter run --flavor dev -t lib/main_dev.dart');
+  /// Runs every setup step. Returns false if a required step failed.
+  Future<bool> runAll(String workingDirectory) async {
+    if (useFvm &&
+        !await _step(
+          'Setting up FVM with Flutter $flutterVersion',
+          'fvm use $flutterVersion --force',
+          workingDirectory,
+          hint: 'Make sure FVM is installed: dart pub global activate fvm',
+        )) {
+      return false;
     }
-  } else {
-    context.logger.info('Next steps:');
-    context.logger.info('  1. cd "$projectName"');
-    context.logger.info('  2. Run: $flutterCmd run --flavor dev -t lib/main_dev.dart');
+
+    if (!await _step(
+      'Creating Android and iOS platform files',
+      createCommand,
+      workingDirectory,
+    )) {
+      return false;
+    }
+
+    _applyAppId(workingDirectory);
+
+    // `flutter create` adds a counter-app test that references a `MyApp`
+    // counter widget which doesn't exist in this template.
+    final defaultTest = File('$workingDirectory/test/widget_test.dart');
+    if (defaultTest.existsSync() &&
+        defaultTest.readAsStringSync().contains('Counter increments smoke test')) {
+      defaultTest.deleteSync();
+    }
+
+    final required = [
+      ('Running $flutter pub get', '$flutter pub get'),
+      ('Running build_runner', '$dart run build_runner build --delete-conflicting-outputs'),
+    ];
+    for (final (label, command) in required) {
+      if (!await _step(label, command, workingDirectory)) return false;
+    }
+
+    // Icons are nice to have; don't fail the whole setup if they break.
+    await _step(
+      'Generating launcher icons for all flavors',
+      '$dart run flutter_launcher_icons',
+      workingDirectory,
+      optional: true,
+    );
+    return true;
   }
 
-  context.logger.info('');
-  context.logger.info('Available commands:');
-  context.logger.info('  • Dev: $flutterCmd run --flavor dev -t lib/main_dev.dart');
-  context.logger.info('  • Prod: $flutterCmd run --flavor prod -t lib/main_prod.dart');
-  context.logger.info('  • Mock: $flutterCmd run --flavor dev -t lib/main_mock.dart');
-  context.logger.info('');
-  if (useFvm) {
-    context.logger.info('💡 Tip: All flutter commands should be prefixed with "fvm flutter"');
-    context.logger.info('');
+  /// Makes Android and iOS use exactly [appId].
+  void _applyAppId(String workingDirectory) {
+    // iOS: flutter create writes `<org>.<camelCaseName>` as the bundle ID.
+    final pbxproj = File('$workingDirectory/ios/Runner.xcodeproj/project.pbxproj');
+    if (pbxproj.existsSync()) {
+      final updated = pbxproj.readAsStringSync().replaceAllMapped(
+        RegExp(r'PRODUCT_BUNDLE_IDENTIFIER = [^;]*?(\.RunnerTests)?;'),
+        (m) => 'PRODUCT_BUNDLE_IDENTIFIER = $appId${m[1] ?? ''};',
+      );
+      pbxproj.writeAsStringSync(updated);
+    }
+
+    // Android: the brick ships MainActivity.kt in the app ID's package; remove
+    // the extra one flutter create generates under `<org>/<package_name>/`.
+    final kotlinDir = Directory('$workingDirectory/android/app/src/main/kotlin');
+    if (!kotlinDir.existsSync()) return;
+    final expected = '${kotlinDir.path}/${appId.replaceAll('.', '/')}/MainActivity.kt';
+    for (final file in kotlinDir.listSync(recursive: true).whereType<File>()) {
+      if (file.path.endsWith('/MainActivity.kt') && file.path != expected) {
+        file.deleteSync();
+        _deleteEmptyParents(file.parent, stopAt: kotlinDir);
+      }
+    }
   }
-  context.logger.info('📖 See README.md and CLAUDE.md for more information');
-  context.logger.info('');
-  context.logger.info('🎨 Launcher icons have been generated for all flavors');
-  context.logger.info('   Replace placeholder icons in assets/icons/ with your own:');
-  context.logger.info('   • assets/icons/app_icon_dev.png (for dev)');
-  context.logger.info('   • assets/icons/app_icon_mock.png (for mock)');
-  context.logger.info('   • assets/icons/app_icon.png (for prod)');
-  context.logger.info('   Then run: ${useFvm ? 'fvm ' : ''}dart run flutter_launcher_icons');
-  context.logger.info('');
+
+  void _deleteEmptyParents(Directory dir, {required Directory stopAt}) {
+    var current = dir;
+    while (current.path != stopAt.path && current.listSync().isEmpty) {
+      current.deleteSync();
+      current = current.parent;
+    }
+  }
+
+  Future<bool> _step(
+    String label,
+    String command,
+    String workingDirectory, {
+    bool optional = false,
+    String? hint,
+  }) async {
+    final progress = logger.progress(label);
+    final parts = command.split(' ');
+    try {
+      final result = await Process.run(
+        parts.first,
+        parts.skip(1).toList(),
+        workingDirectory: workingDirectory,
+        runInShell: Platform.isWindows,
+      );
+      if (result.exitCode == 0) {
+        progress.complete(label);
+        return true;
+      }
+      final message = '$label failed (exit code ${result.exitCode})';
+      optional ? progress.complete('$message, skipped') : progress.fail(message);
+      final stderr = '${result.stderr}'.trim();
+      if (stderr.isNotEmpty) logger.detail(stderr);
+    } on ProcessException catch (e) {
+      final message = '$label failed: ${e.executable} not found';
+      optional ? progress.complete('$message, skipped') : progress.fail(message);
+    }
+    if (hint != null) logger.info(hint);
+    logger.info('  Run manually: cd "$projectName" && $command');
+    return false;
+  }
+
+  void printNextSteps({required bool needsManualSetup}) {
+    final steps = [
+      'cd "$projectName"',
+      if (needsManualSetup) ...[
+        if (useFvm) 'fvm use $flutterVersion',
+        createCommand,
+        'Set the iOS bundle ID to $appId (Xcode → Runner → Signing & Capabilities)',
+        '$flutter pub get',
+        '$dart run build_runner build --delete-conflicting-outputs',
+      ],
+      '$flutter run --flavor dev -t lib/main_dev.dart',
+    ];
+
+    logger
+      ..info('')
+      ..success(needsManualSetup
+          ? '📂 Project files created. A few manual steps are still needed:'
+          : '🎉 Project $projectName created successfully!')
+      ..info('');
+    if (useFvm) {
+      logger
+        ..info('🔧 Flutter version: $flutterVersion (via FVM)')
+        ..info('');
+    }
+
+    logger.info(needsManualSetup ? '⚠️  Manual setup:' : 'Next steps:');
+    for (var i = 0; i < steps.length; i++) {
+      logger.info('  ${i + 1}. ${steps[i]}');
+    }
+
+    logger
+      ..info('')
+      ..info('Available commands:')
+      ..info('  • Dev:  $flutter run --flavor dev -t lib/main_dev.dart')
+      ..info('  • Prod: $flutter run --flavor prod -t lib/main_prod.dart')
+      ..info('  • Mock: $flutter run --flavor mock -t lib/main_mock.dart')
+      ..info('')
+      ..info('🎨 Replace the placeholder icons in assets/icons/ with your own:')
+      ..info('   app_icon_dev.png, app_icon_mock.png, app_icon.png')
+      ..info('   then run: $dart run flutter_launcher_icons')
+      ..info('');
+    if (context.vars['include_maps'] == true) {
+      logger
+        ..info('🗺️  Add your Google Maps API key to android/app/src/main/AndroidManifest.xml')
+        ..info('   and ios/Runner/AppDelegate.swift (GMSServices.provideAPIKey).')
+        ..info('');
+    }
+    if (context.vars['include_fcm_notifications'] == true) {
+      logger
+        ..info('🔔 FCM: add google-services.json to android/app/ and')
+        ..info('   GoogleService-Info.plist to ios/Runner/.')
+        ..info('');
+    }
+    logger
+      ..info('📖 See README.md and CLAUDE.md for more information')
+      ..info('');
+  }
 }

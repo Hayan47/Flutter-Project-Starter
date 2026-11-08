@@ -47,9 +47,9 @@ mason make flutter_clean_architecture
 
 You'll be prompted for:
 
-1. **Project Name** - In snake_case (e.g., `my_awesome_app`)
+1. **Project Name** - Used as-is for the folder (e.g., `my-app`); the Dart package name becomes `my_app`
 2. **Project Description** - Brief description
-3. **Organization** - Reverse domain notation (e.g., `com.example`)
+3. **App ID** - Full Android applicationId and iOS bundle ID (e.g., `com.company.app`)
 4. **Dev API URL** - Development API base URL
 5. **Prod API URL** - Production API base URL
 6. **Include Localization** - Whether to include easy_localization
@@ -57,8 +57,8 @@ You'll be prompted for:
 8. **Include Image Picker** - Whether to include image picker
 9. **Include FCM Notifications** - Whether to include Firebase Cloud Messaging
 10. **Use JWT Auth** - Whether to include JWT token refresh mechanism
-11. **Primary Color** - Hex code without # (e.g., `1976D2`)
-12. **Secondary Color** - Hex code without # (e.g., `424242`)
+11. **Primary Color** - Hex code, with or without # (e.g., `1976D2`)
+12. **Secondary Color** - Hex code, with or without # (e.g., `424242`)
 13. **Use FVM** - Whether to use Flutter Version Manager
 14. **Flutter Version** - Flutter version for FVM (e.g., `3.24.0`, `stable`)
 
@@ -66,9 +66,9 @@ You'll be prompted for:
 
 ```bash
 $ mason make flutter_clean_architecture
-? What is your project name? my_app
+? What is your project name? my-app
 ? Enter project description A new Flutter project with Clean Architecture
-? What is your organization? com.mycompany
+? What is your app ID / bundle ID? (e.g. com.company.app) com.mycompany.myapp
 ? Enter development API URL https://dev-api.mycompany.com
 ? Enter production API URL https://api.mycompany.com
 ? Include localization support? Yes
@@ -95,7 +95,7 @@ The brick will:
 The generated project follows this structure:
 
 ```
-my_app/
+my-app/
 ├── lib/
 │   ├── config/              # Configuration (DI, routing, environment)
 │   │   ├── injection.dart
@@ -140,7 +140,7 @@ my_app/
 ### Development
 
 ```bash
-cd my_app
+cd my-app
 # Without FVM
 flutter run --flavor dev -t lib/main_dev.dart
 
@@ -162,10 +162,10 @@ fvm flutter run --flavor prod -t lib/main_prod.dart
 
 ```bash
 # Without FVM
-flutter run --flavor dev -t lib/main_mock.dart
+flutter run --flavor mock -t lib/main_mock.dart
 
 # With FVM
-fvm flutter run --flavor dev -t lib/main_mock.dart
+fvm flutter run --flavor mock -t lib/main_mock.dart
 ```
 
 > **Note**: If you enabled FVM during generation, prefix all `flutter` commands with `fvm`.
@@ -266,22 +266,19 @@ You can modify the background colors by editing the `adaptive_icon_background` v
 
 ## Next Steps After Generation
 
-1. **If localization is enabled**: Download and add font files to `assets/fonts/`
-   - Cairo font family (for Arabic)
-   - Inter font family (for English)
-
-2. **If FCM notifications are enabled**:
+1. **If FCM notifications are enabled**:
    - Add `google-services.json` to `android/app/`
    - Add `GoogleService-Info.plist` to `ios/Runner/`
    - Configure Firebase project
 
+2. **If maps are enabled**: add your Google Maps API key to
+   `android/app/src/main/AndroidManifest.xml` and `ios/Runner/AppDelegate.swift`
+
 3. **Update API endpoints** in `lib/config/env_config.dart` if needed
 
-4. **Add your logo/icon** to `assets/images/`
+4. **Add your logo/images** to `assets/images/`
 
-5. **Add Lottie animations** to `assets/lottie/` for enhanced UI
-
-6. **Start building features** following the Clean Architecture pattern
+5. **Start building features** following the Clean Architecture pattern
 
 ## Adding Features
 
@@ -327,8 +324,8 @@ flutter pub get
 
 ```bash
 # Code generation
-flutter pub run build_runner build --delete-conflicting-outputs
-flutter pub run build_runner watch --delete-conflicting-outputs
+dart run build_runner build --delete-conflicting-outputs
+dart run build_runner watch --delete-conflicting-outputs
 
 # Static analysis
 flutter analyze
@@ -348,7 +345,7 @@ flutter build ios --flavor prod -t lib/main_prod.dart
 
 > **With FVM**: Prefix all `flutter` commands with `fvm flutter`
 >
-> Example: `fvm flutter pub run build_runner build --delete-conflicting-outputs`
+> Example: `fvm dart run build_runner build --delete-conflicting-outputs`
 
 ## Best Practices
 
@@ -390,8 +387,8 @@ fvm use stable --force  # Force re-install
 **Problem**: Code generation conflicts
 ```bash
 # Solution: Delete generated files and rebuild
-flutter pub run build_runner clean
-flutter pub run build_runner build --delete-conflicting-outputs
+dart run build_runner clean
+dart run build_runner build --delete-conflicting-outputs
 ```
 
 ### Platform Issues

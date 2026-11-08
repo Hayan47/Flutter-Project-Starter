@@ -15,7 +15,7 @@ flutter_clean_architecture_brick/
 ├── README.md                     # Brick documentation
 ├── USAGE.md                      # This file
 ├── __brick__/                    # Template files
-│   └── {{project_name.snakeCase}}/
+│   └── {{project_name}}/
 │       ├── lib/
 │       │   ├── config/           # DI, routing, environment
 │       │   ├── core/             # Core utilities
@@ -75,16 +75,16 @@ mason make flutter_clean_architecture
 
 You'll be asked:
 
-1. **project_name**: Snake case (e.g., `my_app`)
+1. **project_name**: Folder name as entered (e.g., `my-app`); package name is its snake_case (`my_app`)
 2. **project_description**: Brief description
-3. **organization**: Reverse domain (e.g., `com.mycompany`)
+3. **app_id**: Full Android applicationId / iOS bundle ID (e.g., `com.company.app`)
 4. **dev_api_url**: Dev API URL (default: https://dev-api.example.com)
 5. **prod_api_url**: Prod API URL (default: https://api.example.com)
 6. **include_localization**: true/false
 7. **include_maps**: true/false
 8. **include_image_picker**: true/false
-9. **primary_color**: Hex without # (e.g., `1976D2`)
-10. **secondary_color**: Hex without # (e.g., `424242`)
+9. **primary_color**: Hex, with or without # (e.g., `1976D2`)
+10. **secondary_color**: Hex, with or without # (e.g., `424242`)
 
 ### Non-Interactive Mode
 
@@ -92,9 +92,9 @@ Create a `config.json`:
 
 ```json
 {
-  "project_name": "my_awesome_app",
+  "project_name": "my-app",
   "project_description": "An awesome Flutter app",
-  "organization": "com.mycompany",
+  "app_id": "com.company.app",
   "dev_api_url": "https://dev-api.mycompany.com",
   "prod_api_url": "https://api.mycompany.com",
   "include_localization": true,
@@ -170,7 +170,7 @@ Based on your selections:
 ### 1. Navigate to Project
 
 ```bash
-cd my_awesome_app
+cd my-app
 ```
 
 ### 2. Add Fonts (if localization enabled)
@@ -189,7 +189,7 @@ flutter run --flavor dev -t lib/main_dev.dart
 flutter run --flavor prod -t lib/main_prod.dart
 
 # Mock mode (no backend needed)
-flutter run --flavor dev -t lib/main_mock.dart
+flutter run --flavor mock -t lib/main_mock.dart
 ```
 
 ### 4. Build for Release
@@ -227,7 +227,7 @@ mkdir -p lib/features/my_feature/{data/{datasources,models,repositories},domain/
 
 5. Run code generation:
 ```bash
-flutter pub run build_runner build --delete-conflicting-outputs
+dart run build_runner build --delete-conflicting-outputs
 ```
 
 ### Update API URLs
@@ -278,7 +278,7 @@ vars:
 
 ### Modify Templates
 
-Edit files in `__brick__/{{project_name.snakeCase}}/`:
+Edit files in `__brick__/{{project_name}}/`:
 
 Use Mason templating:
 - `{{variable_name}}` - Insert variable
@@ -308,7 +308,7 @@ Edit `/Users/jhussein/StudioProjects/flutter_clean_architecture_brick/hooks/post
 This is normal for a new project. Run manually:
 ```bash
 flutter pub get
-flutter pub run build_runner build --delete-conflicting-outputs
+dart run build_runner build --delete-conflicting-outputs
 ```
 
 ### Font Not Found (if localization enabled)

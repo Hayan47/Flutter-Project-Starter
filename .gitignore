@@ -1,1 +1,19 @@
+# macOS
 .DS_Store
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# Mason hook build artifacts
+hooks/.dart_tool/
+hooks/build/
+hooks/pubspec.lock
+
+# Gradle caches must never end up in the brick template
+__brick__/**/.gradle/
+
+# Local test output
+.mason/
+mason-lock.json

@@ -1,11 +1,12 @@
 name: flutter_clean_architecture
 description: A Flutter project template with Clean Architecture, BLoC, multi-environment setup, and comprehensive core infrastructure
-version: 1.0.1
+version: 2.0.0
+repository: https://github.com/Hayan47/Flutter-Project-Starter
 
 vars:
   project_name:
     type: string
-    description: The project name in snake_case (e.g., my_awesome_app)
+    description: The project folder name, kept exactly as entered (e.g. my-app). The Dart package name is derived as snake_case (my_app).
     prompt: What is your project name?
 
   project_description:
@@ -14,11 +15,11 @@ vars:
     prompt: Enter project description
     default: A new Flutter project with Clean Architecture
 
-  organization:
+  app_id:
     type: string
-    description: Organization name in reverse domain notation (e.g., com.example)
-    prompt: What is your organization?
-    default: com.example
+    description: Full application ID, used as the Android applicationId/namespace and the iOS bundle ID (e.g. com.company.app)
+    prompt: What is your app ID / bundle ID? (e.g. com.company.app)
+    default: com.example.app
 
   dev_api_url:
     type: string
@@ -54,7 +55,7 @@ vars:
     type: boolean
     description: Include FCM notifications feature
     prompt: Include FCM notifications feature?
-    default: true  
+    default: true
 
   use_jwt_auth:
     type: boolean
@@ -64,14 +65,14 @@ vars:
 
   primary_color:
     type: string
-    description: Primary color hex code (without #)
-    prompt: Enter primary color hex (without #)
+    description: Primary color hex code (e.g. 1976D2 or #1976D2)
+    prompt: Enter primary color hex
     default: "1976D2"
 
   secondary_color:
     type: string
-    description: Secondary color hex code (without #)
-    prompt: Enter secondary color hex (without #)
+    description: Secondary color hex code (e.g. 424242 or #424242)
+    prompt: Enter secondary color hex
     default: "424242"
 
   use_fvm:
@@ -83,7 +84,7 @@ vars:
   flutter_version:
     type: string
     description: Flutter version to use with FVM (e.g., 3.24.0, stable)
-    prompt: Enter Flutter version for FVM (leave empty to skip)
+    prompt: Flutter version for FVM (only used if FVM is enabled)
     default: "stable"
 
 environment:
